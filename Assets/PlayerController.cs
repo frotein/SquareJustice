@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
     List<Transform> corners;
     List<Transform> collisions;
     int wallJump;
+    Vector2 jumpNormal;
     // Use this for initialization
     void Start()
     {
@@ -76,26 +77,35 @@ public class PlayerController : MonoBehaviour
         if(wallJump != 0 && Input.GetButtonDown("Jump") && !onGround)
         {
             rb.velocity = Vector2.zero;
-            Vector2 jumpVector = transform.right.XY() * wallJump + new Vector2(0, 1.5f);
+            Vector2 jumpVector = jumpNormal + new Vector2(0, 1.5f);
             rb.AddForce(jumpVector * wallJumpForce);
         }
     }
-
     void OnCollisionStay2D(Collision2D col)
     {
-     /*   Vector2 pos = Vector2.zero;
-        int num = 0;
-        foreach (ContactPoint2D con in col.contacts)
+        Vector2 normal = Vector2.zero;
+        foreach(ContactPoint2D p in col.contacts)
         {
-            pos += con.point;
-            num++;
+            normal += p.normal;
         }
-        pos /= num;
 
-        if (pos.y < transform.position.y)
-            onGround = true;*/
+        normal /= col.contacts.Length;
+
+        jumpNormal = normal;
     }
 
+    void OnCollisionEnter2D(Collision2D col)
+    {
+        Vector2 normal = Vector2.zero;
+        foreach (ContactPoint2D p in col.contacts)
+        {
+            normal += p.normal;
+        }
+
+        normal /= col.contacts.Length;
+
+        jumpNormal = normal;
+    }
     void OnCollisionExit2D(Collision2D col)
     {
      /*   Vector2 pos = Vector2.zero;
@@ -113,6 +123,7 @@ public class PlayerController : MonoBehaviour
 
     void DetectCollisions()
     {
+        
         collisions = new List<Transform>();
         foreach (Transform t in corners)
         {
@@ -124,7 +135,7 @@ public class PlayerController : MonoBehaviour
         int below = 0;
         int left = 0;
         int right = 0;
-        if (collisions.Count > 1)
+        if (collisions.Count >= 1)
         {          
             foreach (Transform t in collisions)
             {
@@ -146,7 +157,7 @@ public class PlayerController : MonoBehaviour
                 wallJump = 0;
         }
 
-        if (below > 1)
+        if (below >= 1 && wallJump == 0)
             onGround = true;
         else
             onGround = false;
